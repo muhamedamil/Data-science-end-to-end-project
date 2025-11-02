@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wine Quality - Predict</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f7fafc; padding:20px; }
+    .container { max-width:720px; margin:0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
+    h1 { margin-top:0; font-size:20px; }
+    label { display:block; font-size:13px; margin-top:12px; }
+    input[type="number"] { width:100%; padding:8px 10px; margin-top:6px; box-sizing:border-box; border:1px solid #ddd; border-radius:4px; }
+    .row { display:flex; gap:10px; }
+    .col { flex:1; }
+    .btn { margin-top:16px; padding:10px 14px; border:none; background:#2563eb; color:#fff; border-radius:6px; cursor:pointer; }
+    .btn:disabled { background:#9bb7ff; cursor:not-allowed; }
+    pre { background:#0f172a; color:#e6eef8; padding:12px; border-radius:6px; overflow:auto; font-size:13px; }
+    .status { margin-top:12px; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Wine Quality — Predict</h1>
+    <p>Enter feature values (from wine-quality dataset) and submit to get prediction.</p>
+
+    <form id="wineForm">
+      <div class="row">
+        <div class="col">
+          <label>fixed_acidity
+            <input name="fixed_acidity" type="number" step="0.01" value="7.4" required>
+          </label>
+        </div>
+        <div class="col">
+          <label>volatile_acidity
+            <input name="volatile_acidity" type="number" step="0.001" value="0.70" required>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>citric_acid
+            <input name="citric_acid" type="number" step="0.001" value="0.00" required>
+          </label>
+        </div>
+        <div class="col">
+          <label>residual_sugar
+            <input name="residual_sugar" type="number" step="0.01" value="1.9" required>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>chlorides
+            <input name="chlorides" type="number" step="0.0001" value="0.076" required>
+          </label>
+        </div>
+        <div class="col">
+          <label>free_sulfur_dioxide
+            <input name="free_sulfur_dioxide" type="number" step="1" value="11" required>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>total_sulfur_dioxide
+            <input name="total_sulfur_dioxide" type="number" step="1" value="34" required>
+          </label>
+        </div>
+        <div class="col">
+          <label>density
+            <input name="density" type="number" step="0.000001" value="0.9978" required>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>pH
+            <input name="pH" type="number" step="0.01" value="3.51" required>
+          </label>
+        </div>
+        <div class="col">
+          <label>sulphates
+            <input name="sulphates" type="number" step="0.01" value="0.56" required>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>alcohol
+            <input name="alcohol" type="number" step="0.1" value="9.4" required>
+          </label>
+        </div>
+        <div class="col">
+          <label>-- (target is quality, predicted by server) --
+            <input disabled style="background:#f3f4f6; border:1px dashed #ddd; padding:8px; margin-top:6px;">
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">Predict</button>
+    </form>
+
+    <div class="status" id="status"></div>
+
+    <h3>Payload preview</h3>
+    <pre id="payloadPreview">{ }</pre>
+
+    <h3>Server response</h3>
+    <pre id="serverResp">No response yet.</pre>
+  </div>
+
+  <script>
+    const form = document.getElementById('wineForm');
+    const preview = document.getElementById('payloadPreview');
+    const resp = document.getElementById('serverResp');
+    const status = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function formToJson(formEl) {
+      const fd = new FormData(formEl);
+      const obj = {};
+      for (const [k, v] of fd.entries()) {
+        // convert to number if possible
+        const num = Number(v);
+        obj[k] = Number.isNaN(num) ? v : num;
+      }
+      return obj;
+    }
+
+    form.addEventListener('input', () => {
+      const payload = formToJson(form);
+      preview.textContent = JSON.stringify(payload, null, 2);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      status.textContent = 'Sending request...';
+      const payload = formToJson(form);
+
+      // show payload
+      preview.textContent = JSON.stringify(payload, null, 2);
+
+      try {
+        // change '/predict' to your actual model prediction endpoint
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          status.textContent = `Server responded ${res.status}`;
+          resp.textContent = text || `HTTP ${res.status}`;
+        } else {
+          const data = await res.json();
+          status.textContent = 'Prediction received';
+          resp.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        status.textContent = 'Request failed';
+        resp.textContent = String(err);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // initialize preview
+    preview.textContent = JSON.stringify(formToJson(form), null, 2);
+  </script>
+</body>
+</html>
