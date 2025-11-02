@@ -30,8 +30,3 @@ To update and maintain the pipeline, follow these steps:
 8. Update `main.py` – Orchestrate the execution of the entire pipeline.
 
 ---
-
-## 📌 Notes
-
-- This project is modular and scalable for end-to-end machine learning workflows.
-- Integrates best practices like configuration management, validation, and experiment tracking.
