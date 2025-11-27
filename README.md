@@ -1,6 +1,4 @@
-from pathlib import Path
 
-readme_content = """# End-to-End Data Science Project
 
 This repository demonstrates a complete **Data Science / Machine Learning pipeline** with workflows for ingestion, validation, transformation, model training, and evaluation — along with a simple **Flask web application** to deploy and interact with the trained model.
 
